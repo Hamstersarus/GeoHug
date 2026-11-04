@@ -4,13 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GeoHug</title>
-    <link rel="stylesheet" href="styles.css">
+   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <section id="setup-screen">
+        <h1>GeoHug</h1>
+        <input type="text" id="country-input" placeholder="Enter a country" list="country-options">
+        <datalist id="country-options"></datalist>
+        <button id="add-btn">Add</button>
+        <p id="error-msg"></p>
+        <ul id="country-list"></ul>
+        <button id="start-btn">Start quiz</button>
+    </section>
 
-    <!-- screens go here (step 1, item 3) -->
+    <section id="quiz-screen" class="hidden">
+        <p id="prompt"></p>
+        <p id="map"></p>
+        <svg id="map"></svg>
+    </section>
 
+    <section id="result-screen" class="hidden">
+        <p id="final-score"></p>
+        <button id="restart-btn">Restart</button>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="app.js"></script>
