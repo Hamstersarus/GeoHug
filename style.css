@@ -6,3 +6,13 @@
     width: 100%;
     height: 80vh;
 }
+
+.country {
+    fill: #cfd8dc;
+    stroke: #fff;
+    stroke-width: 0.5;
+}
+
+.country:hover {
+    fill: #90a4ae;
+}
