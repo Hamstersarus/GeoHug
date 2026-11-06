@@ -16,3 +16,15 @@
 .country:hover {
     fill: #90a4ae;
 }
+
+.country.correct {
+    fill: #66bb6a;
+}
+
+.country.wrong {
+    fill: #ef5350;
+}
+
+.country.reveal {
+    fill: #ffd54f;
+}

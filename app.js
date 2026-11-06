@@ -173,7 +173,8 @@ function addCountry() {
 }
 
 function fillDataList() {
-    const names = features.map(f => f.properties.NAME).sort();
+    const names = features
+    .map(f => f.properties.NAME).sort();
 
     names.forEach(name => {
         const option = document.createElement("option");
@@ -189,9 +190,126 @@ countryInput.addEventListener("keydown", event => {
     }
 });
 
+const setupScreen = document.querySelector("#setup-screen");
+const quizScreen = document.querySelector("#quiz-screen");
+const resultScreen = document.querySelector("#result-screen");
+const startBtn = document.querySelector("#start-btn");
+const promptEl =document.querySelector("#prompt");
+const scoreEl = document.querySelector("#score");
+const finalScoreEl = document.querySelector("#final-score");
+const restartBtn = document.querySelector("#restart-btn");
+
+let queue = [];
+let currentTarget = null;
+let score = 0;
+let missed = [];
+let acceptingClicks = false;
+
+function getVisibleFeatures() {
+    const continents = new Set();
+
+    selected.forEach(name => {
+        const match = features.find(f => f.properties.NAME === name);
+        continents.add(match.properties.CONTINENT);
+    });
+
+    return features.filter(f => continents.has(f.properties.CONTINENT));
+}
+
+function shuffleArray(array) {
+    const copy = [...array];
+
+    for(let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+}
+
+function showNextQuestion() {
+    if(queue.length === 0) {
+        showResults();
+        return;
+    }
+
+    currentTarget = queue.pop();
+    promptEl.textContent = "Click: " + currentTarget;
+    scoreEl.textContent = "Score: " + score;
+    acceptingClicks = true;
+}
+
+function handleClick(event, d) {
+    if(!acceptingClicks) {
+        return;
+    }
+    acceptingClicks = false;
+
+    if(d.properties.NAME === currentTarget) {
+        score++;
+        d3.select(event.currentTarget).classed("correct", true);
+        showNextQuestion();
+        return;
+    }
+
+    missed.push(currentTarget);
+    d3.select(event.currentTarget).classed("wrong", true);
+    svg.selectAll("path")
+        .filter(f => f.properties.NAME === currentTarget)
+        .classed("reveal", true);
+
+    setTimeout(() => {
+        svg.selectAll(".wrong, .reveal")
+            .classed("wrong", false)
+            .classed("reveal", false);
+        showNextQuestion();
+    }, 1200);
+}
+
+function beginQuestions() {
+    queue = shuffleArray(selected);
+    score = 0;
+    missed = [];
+
+    svg.selectAll("path").on("click", handleClick);
+    showNextQuestion();
+}
+
+function showResults() {
+    quizScreen.classList.add("hidden");
+    resultScreen.classList.remove("hidden");
+
+    let text = "You got " + score + " out of " + selected.length + " right.";
+    if(missed.length > 0) {
+        text += " Missed: " + missed.join(", ");
+    }
+    finalScoreEl.textContent = text;
+}
+
+function restart() {
+    resultScreen.classList.add("hidden");
+    setupScreen.classList.remove("hidden");
+}
+
+function startQuiz() {
+    if(selected.length === 0) {
+        errorMsg.textContent = "Add at least one country first.";
+        return;
+    }
+
+    errorMsg.textContent = "";
+    setupScreen.classList.add("hidden");
+    quizScreen.classList.remove("hidden");
+
+    drawMap(getVisibleFeatures());
+    beginQuestions();
+}
+
+startBtn.addEventListener("click", startQuiz);
+restartBtn.addEventListener("click", restart);
+
 d3.json("countries.geojson").then(data => {
     data.features.forEach(reverseRings);
     features = data.features;
     fillDataList();
-    drawMap(features);
 });

@@ -44,5 +44,33 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] Write `addCountry()`: show an error for unknown names and for duplicates, otherwise add the country, clear the input and re-render
 - [x] Write `fillDataList()` and call it after the data loads, so the input autocompletes
 - [x] Wire up the Add button click and the Enter key
-- [ ] Test: autocomplete suggests Germany, Add and Enter both work, a duplicate shows an error, "Narnia" shows an error, "USA" adds "United States of America", Remove works
+- [x] Test: autocomplete suggests Germany, Add and Enter both work, a duplicate shows an error, "Narnia" shows an error, "USA" adds "United States of America", Remove works
+- [ ] Commit and push
+
+## Step 5: Compute which continents to show
+
+- [x] Select the setup, quiz and result screens and the Start quiz button
+- [x] Write `getVisibleFeatures()`: look up each selected country's `CONTINENT`, collect them in a `Set`, and return every feature on those continents
+- [x] Write `startQuiz()`: show an error if nothing is selected, hide the setup screen, un-hide the quiz screen, then call `drawMap(getVisibleFeatures())`
+- [x] Un-hide the quiz screen before drawing, because `clientWidth` and `clientHeight` are 0 while it is hidden
+- [x] Remove the `drawMap(features)` call from the data load, so the map only draws when the quiz starts
+- [x] Wire up the Start quiz button click
+- [x] Test: Germany, Russia, Ukraine and Sweden show Europe only, and Argentina with China shows South America and Asia
+- [ ] Silence the favicon 404 by adding `<link rel="icon" href="data:,">` to the head
+- [ ] Optional polish: stop Russia's far-east piece and French Guiana from shrinking the map frame
+- [ ] Commit and push
+
+## Step 6: Quiz logic
+
+- [x] Create the quiz state: `queue`, `currentTarget`, `score`, and a `missed` array
+- [x] Write a shuffle function and fill `queue` with a shuffled copy of `selected`, so only the entered countries are asked
+- [x] Write `showNextQuestion()`: take the next name from `queue`, show "Click: <name>" in `#prompt` and the score in `#score`
+- [x] Add a click handler to every country path that reads the clicked `d.properties.NAME`
+- [x] On a correct click: colour the country green, add 1 to `score`, then ask the next country
+- [x] On a wrong click: flash the clicked country red, highlight the correct country, add the target to `missed`, then ask the next country
+- [x] Add `.correct`, `.wrong` and `.reveal` rules to `style.css`
+- [x] Ignore clicks while the answer feedback is showing, so a double click cannot count twice
+- [x] When `queue` is empty, hide the quiz screen, show `#result-screen` and write the final score into `#final-score`
+- [x] Wire up the Restart button: clear state, hide the result screen, show the setup screen
+- [x] Test: only the entered countries are asked, correct and wrong clicks colour properly, the score is right, and the results screen appears at the end
 - [ ] Commit and push
