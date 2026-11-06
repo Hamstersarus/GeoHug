@@ -33,6 +33,44 @@ function reverseRings(feature) {
     polygons.forEach(polygon => polygon.forEach(ring => ring.reverse()));
 }
 
+// Some longitudes are a hair past 180 (e.g. 180.00000000000006), which D3 wraps to
+// the other side of the world and stretches the map frame.
+function clampLongitudes(feature) {
+    const g = feature.geometry;
+    let polygons = g.coordinates;
+
+    if(g.type === "Polygon") {
+        polygons = [g.coordinates];
+    }
+
+    polygons.forEach(polygon => polygon.forEach(ring => ring.forEach(point => {
+        point[0] = Math.max(-180, Math.min(180, point[0]));
+    })));
+}
+
+// [west, south, east, north]. Pieces of a country whose centre falls outside
+// its continent's box (Russia's tip past the date line, French Guiana, one Fiji island)
+// are dropped so they don't shrink the map.
+const continentBoxes = {
+    "Europe": [-30, 30, 180, 85],
+    "Oceania": [100, -50, 180, 5]
+};
+
+function trimStrayPieces(feature) {
+    const box = continentBoxes[feature.properties.CONTINENT];
+    const g = feature.geometry;
+
+    if(!box || g.type !== "MultiPolygon") {
+        return;
+    }
+
+    g.coordinates = g.coordinates.filter(polygon => {
+        const centre = d3.geoCentroid({ type: "Polygon", coordinates: polygon });
+        return centre[0] >= box[0] && centre[0] <= box[2] &&
+               centre[1] >= box[1] && centre[1] <= box[3];
+    });
+}
+
 let selected  = [];
 
 const countryInput = document.querySelector("#country-input");
@@ -309,7 +347,9 @@ startBtn.addEventListener("click", startQuiz);
 restartBtn.addEventListener("click", restart);
 
 d3.json("countries.geojson").then(data => {
+    data.features.forEach(clampLongitudes);
     data.features.forEach(reverseRings);
+    data.features.forEach(trimStrayPieces);
     features = data.features;
     fillDataList();
 });

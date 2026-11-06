@@ -33,7 +33,7 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] Write `reverseRings(feature)` and call it on every feature, so D3 reads the polygons correctly (without it the map is one black shape)
 - [x] Load `countries.geojson` with `d3.json`, store the features, and call `drawMap(features)`
 - [x] Put `class="hidden"` back on `#quiz-screen`
-- [ ] Commit and push
+- [x] Commit and push
 
 ## Step 4: Input handling
 
@@ -45,7 +45,7 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] Write `fillDataList()` and call it after the data loads, so the input autocompletes
 - [x] Wire up the Add button click and the Enter key
 - [x] Test: autocomplete suggests Germany, Add and Enter both work, a duplicate shows an error, "Narnia" shows an error, "USA" adds "United States of America", Remove works
-- [ ] Commit and push
+- [x] Commit and push
 
 ## Step 5: Compute which continents to show
 
@@ -56,9 +56,9 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] Remove the `drawMap(features)` call from the data load, so the map only draws when the quiz starts
 - [x] Wire up the Start quiz button click
 - [x] Test: Germany, Russia, Ukraine and Sweden show Europe only, and Argentina with China shows South America and Asia
-- [ ] Silence the favicon 404 by adding `<link rel="icon" href="data:,">` to the head
-- [ ] Optional polish: stop Russia's far-east piece and French Guiana from shrinking the map frame
-- [ ] Commit and push
+- [x] Silence the favicon 404 by adding `<link rel="icon" href="data:,">` to the head
+- [x] Optional polish: stop Russia's far-east piece and French Guiana from shrinking the map frame (`clampLongitudes`, `trimStrayPieces` and `continentBoxes` in `app.js`)
+- [x] Commit and push
 
 ## Step 6: Quiz logic
 
@@ -73,4 +73,4 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] When `queue` is empty, hide the quiz screen, show `#result-screen` and write the final score into `#final-score`
 - [x] Wire up the Restart button: clear state, hide the result screen, show the setup screen
 - [x] Test: only the entered countries are asked, correct and wrong clicks colour properly, the score is right, and the results screen appears at the end
-- [ ] Commit and push
+- [x] Commit and push
