@@ -74,3 +74,53 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] Wire up the Restart button: clear state, hide the result screen, show the setup screen
 - [x] Test: only the entered countries are asked, correct and wrong clicks colour properly, the score is right, and the results screen appears at the end
 - [x] Commit and push
+
+## Step 7: Polish
+
+### 7a. Retry missed countries
+- [x] Add a hidden `#retry-btn` ("Retry missed countries") to the result screen in `index.html`
+- [x] Change `beginQuestions` to take a list of names, and track `total` so the results screen reports the right number
+- [x] Write `retryMissed()` and show the retry button only when `missed` is not empty
+- [x] Test: miss a country, finish, click Retry, and only the missed ones are asked
+
+### 7b. Zoom and pan
+- [x] Draw the paths inside a `<g class="map-layer">` instead of directly in the SVG
+- [x] Create a `d3.zoom()` with a scale range, apply it to the SVG, and move the layer on zoom
+- [x] Reset the zoom each time the map is redrawn
+- [x] Add `vector-effect: non-scaling-stroke` to `.country` so borders stay thin when zoomed
+- [x] Test: scroll to zoom, drag to pan, clicking a country still answers the question
+
+### 7c. Remember the country list
+- [x] Write `saveSelected()` and call it from `renderList()`
+- [x] Write `loadSelected()`, which only keeps names that exist in the data, and call it after the data loads
+- [x] Test: add countries, reload the page, and the list is still there
+
+### 7d. Redraw on window resize
+- [x] Keep `currentVisible` and `correctNames` so a redraw can restore the quiz state
+- [x] Write `redrawQuizMap()` and call it from a `resize` listener while the quiz screen is showing
+- [x] Test: resize the window mid-quiz, and the map refits with the green countries still green
+
+- [ ] Commit and push
+
+## Step 8: Presets, regions and areas
+
+### 8a. Preset picker in the page
+- [ ] Add a preset box to the setup screen: a `<select id="preset-select">` and the buttons "Add to list", "Replace list" and "Clear list"
+- [ ] Select the new elements in `app.js`
+
+### 8b. Build presets from the data
+- [ ] Write `customAreas` (hand-made groups such as Balkans, Nordic countries, Middle East), using exact `NAME` strings from the data
+- [ ] Write `buildPresetGroups()`: group every country by `CONTINENT` and by `SUBREGION`, skipping a region whose name equals its continent
+- [ ] Write `fillPresetSelect()`: one `<optgroup>` each for Continents, Regions and Areas, skipping groups with fewer than 2 countries
+- [ ] Call both after the data loads, before `loadSelected()`
+
+### 8c. Preset buttons
+- [ ] Write `getPresetNames()`, which reads the picked option and keeps only names that exist in the data
+- [ ] Write `addPreset()`, `replacePreset()` and `clearList()`, each ending with `renderList()`
+- [ ] Wire up the three button clicks
+- [ ] Test: Europe adds 39 countries, Balkans adds 11, Add keeps existing countries without duplicates, Replace swaps the list, Clear empties it, and Start quiz works on a preset
+
+### 8d. Optional: save your own presets
+- [ ] Save the current list under a name in `localStorage`, show it in an "My presets" group, and add a delete button
+
+- [ ] Commit and push

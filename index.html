@@ -11,6 +11,12 @@
 
     <section id="setup-screen">
         <h1>GeoHug</h1>
+        <div id="preset-box">
+            <select id="preset-select"></select>
+            <button id="preset-add-btn">Add to list</button>
+            <button id="preset-replace-btn">Replace list</button>
+            <button id="clear-btn">Clear list</button>
+        </div>
         <input type="text" id="country-input" placeholder="Enter a country" list="country-options">
         <datalist id="country-options"></datalist>
         <button id="add-btn">Add</button>
@@ -28,6 +34,8 @@
     <section id="result-screen" class="hidden">
         <p id="final-score"></p>
         <button id="restart-btn">Restart</button>
+        <button id="retry-btn" class="hidden">Retry missed countries</button>
+        <button id="retry-btn" class="hidden">Retry missed countries</button>
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>

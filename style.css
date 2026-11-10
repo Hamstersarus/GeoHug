@@ -11,6 +11,7 @@
     fill: #cfd8dc;
     stroke: #fff;
     stroke-width: 0.5;
+    vector-effect: non-scaling-stroke;
 }
 
 .country:hover {

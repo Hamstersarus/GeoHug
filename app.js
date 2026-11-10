@@ -2,6 +2,14 @@ let features = [];
 
 const svg = d3.select("#map");
 
+const zoom = d3.zoom()
+    .scaleExtent([1, 12])
+    .on("zoom", event => {
+        svg.select(".map-layer").attr("transform", event.transform);
+    });
+
+svg.call(zoom);
+
 function drawMap(featuresToDraw) {
     const width = svg.node().clientWidth;
     const height = svg.node().clientHeight;
@@ -12,14 +20,17 @@ function drawMap(featuresToDraw) {
     );
     const path = d3.geoPath(projection);
 
-    svg.selectAll("path").remove();
+    svg.selectAll(".map-layer").remove();
+    svg.call(zoom.transform, d3.zoomIdentity);
 
-    svg.selectAll("path")
+    svg.append("g")
+        .attr("class", "map-layer")
+        .selectAll("path")
         .data(featuresToDraw)
         .join("path")
         .attr("d", path)
         .attr("data-name", d => d.properties.NAME)
-        .attr("class", "country");   
+        .attr("class", "country");
 }
 
 function reverseRings(feature) {
@@ -78,6 +89,8 @@ const addBtn = document.querySelector("#add-btn");
 const errorMsg = document.querySelector("#error-msg");
 const countryList = document.querySelector("#country-list");
 const datalist = document.querySelector("#country-options");
+const retryBtn = document.querySelector("#retry-btn");
+let total = 0;
 
 const aliases = {
     // United States
@@ -189,6 +202,24 @@ function renderList() {
         li.appendChild(removeBtn);
         countryList.appendChild(li);
     });
+
+    saveSelected();
+}
+
+function saveSelected() {
+    try {
+        localStorage.setItem("geohug-selected", JSON.stringify(selected));
+    } catch(e) {}
+}
+
+function loadSelected() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("geohug-selected"));
+        if(Array.isArray(saved)) {
+            selected = saved.filter(name => features.some(f => f.properties.NAME === name));
+            renderList();
+        }
+    } catch(e) {}
 }
 
 function addCountry() {
@@ -221,6 +252,114 @@ function fillDataList() {
     });
 }
 
+const presetSelect = document.querySelector("#preset-select");
+const presetAddBtn = document.querySelector("#preset-add-btn");
+const presetReplaceBtn = document.querySelector("#preset-replace-btn");
+const clearBtn = document.querySelector("#clear-btn");
+
+let presetGroups = {};
+
+const customAreas = {
+    "Nordic Countries" : [],
+    "Baltic states" : [],
+    "Balkans" : [],
+    "British Isles" : [],
+    "Benelux" : [],
+    "Caucasus" : [],
+    "Middle East" : [],
+    "Mainland Southeast Asia" : [],
+    "Horn of Africa" : [],
+    "Sahel" : [],
+    "Maghreb" : [],
+    "Andrean countries" : [],
+    "The -stans" : [],
+};
+
+function buildPresetGroups() {
+    const continents = {};
+    const regions = {};
+
+    features.forEach(f => {
+        const name = f.properties.NAME;
+        const continent = f.properties.CONTINENT;
+        const subregion = f.properties.SUBREGION;
+
+        if(!continents[continent]) {
+            continents[continent] = [];
+        }
+        continents[continent].push(name);
+
+        if(subregion !== continent) {
+            if(!regions[subregion]) {
+                regions[subregion] = [];
+            }
+            regions[subregion].push(name);
+        }
+    });
+
+    presetGroups = {
+        "Continents" : continents,
+        "Regions": regions,
+        "Areas": customAreas
+    };
+}
+
+function fillPresetSelect() {
+    presetSelect.innerHTML = "";
+
+    Object.keys(presetGroups).forEach(groupName => {
+        const optgroup = document.createElement("optgroup");
+        optgroup.label = groupName;
+
+        Object.keys(presentGroups[groupName]).sort().forEach(presetName => {
+            const names = presetGroups[groupName][presetName];
+            if(names.length < 2) {
+                return;
+            }
+
+            const option = document.createElement("option");
+            option.value = groupName + "|" + presetName;
+            option.textContent = presetName + " (" + names.length + ") ";
+            optgroup.appendChild(option);
+        });
+
+        presetSelect.appendChild(optgroup);
+    });
+}
+
+function getPresetNames() {
+    const parts = presetSelect.value.split("|");
+    const names = presetGroups[parts[0]][parts[1]];
+
+    return names.filter(name => features.some(f => f.properties.NAME === name));
+}
+
+function addPreset() {
+    getPresetNames().forEach(name => {
+        if(!selected.includes(name)) {
+            selected.push(name);
+        }
+    });
+
+    errorMsg.textContent = "";
+    renderList();
+}
+
+function replacePreset() {
+    selected = [];
+    addPreset();
+}
+
+function clearList() {
+    selected = [];
+    errorMsg.textContent = "";
+    renderList();
+}
+
+presetAddBtn.addEventListener("click", addPreset);
+presetReplaceBtn.addEventListener("click", replacePreset);
+clearBtn.addEventListener("click", clearList);
+
 addBtn.addEventListener("click", addCountry);
 countryInput.addEventListener("keydown", event => {
     if(event.key === "Enter") {
@@ -232,7 +371,7 @@ const setupScreen = document.querySelector("#setup-screen");
 const quizScreen = document.querySelector("#quiz-screen");
 const resultScreen = document.querySelector("#result-screen");
 const startBtn = document.querySelector("#start-btn");
-const promptEl =document.querySelector("#prompt");
+const promptEl = document.querySelector("#prompt");
 const scoreEl = document.querySelector("#score");
 const finalScoreEl = document.querySelector("#final-score");
 const restartBtn = document.querySelector("#restart-btn");
@@ -242,6 +381,8 @@ let currentTarget = null;
 let score = 0;
 let missed = [];
 let acceptingClicks = false;
+let currentVisible = [];
+let correctNames = [];
 
 function getVisibleFeatures() {
     const continents = new Set();
@@ -285,6 +426,7 @@ function handleClick(event, d) {
 
     if(d.properties.NAME === currentTarget) {
         score++;
+        correctNames.push(currentTarget);
         d3.select(event.currentTarget).classed("correct", true);
         showNextQuestion();
         return;
@@ -304,12 +446,16 @@ function handleClick(event, d) {
     }, 1200);
 }
 
-function beginQuestions() {
-    queue = shuffleArray(selected);
+function beginQuestions(names) {
+    queue = shuffleArray(names);
+    total = names.length;
     score = 0;
     missed = [];
+    correctNames = [];
 
-    svg.selectAll("path").on("click", handleClick);
+    svg.selectAll("path")
+        .classed("correct", false)
+        .on("click", handleClick);
     showNextQuestion();
 }
 
@@ -317,17 +463,41 @@ function showResults() {
     quizScreen.classList.add("hidden");
     resultScreen.classList.remove("hidden");
 
-    let text = "You got " + score + " out of " + selected.length + " right.";
+    let text = "You got " + score + " out of " + total + " right.";
     if(missed.length > 0) {
         text += " Missed: " + missed.join(", ");
     }
     finalScoreEl.textContent = text;
+    retryBtn.classList.toggle("hidden", missed.length === 0);
 }
 
 function restart() {
     resultScreen.classList.add("hidden");
     setupScreen.classList.remove("hidden");
 }
+
+function redrawQuizMap() {
+    drawMap(currentVisible);
+    svg.selectAll("path")
+        .on("click", handleClick)
+        .classed("correct", d => correctNames.includes(d.properties.NAME));
+}
+
+window.addEventListener("resize", () => {
+    if(!quizScreen.classList.contains("hidden")) {
+        redrawQuizMap();
+    }
+});
+
+function retryMissed() {
+    const names = [...missed];
+
+    resultScreen.classList.add("hidden");
+    quizScreen.classList.remove("hidden");
+    beginQuestions(names);
+}
+
+retryBtn.addEventListener("click", retryMissed);
 
 function startQuiz() {
     if(selected.length === 0) {
@@ -339,8 +509,9 @@ function startQuiz() {
     setupScreen.classList.add("hidden");
     quizScreen.classList.remove("hidden");
 
-    drawMap(getVisibleFeatures());
-    beginQuestions();
+    currentVisible = getVisibleFeatures();
+    drawMap(currentVisible);
+    beginQuestions(selected);
 }
 
 startBtn.addEventListener("click", startQuiz);
@@ -352,4 +523,8 @@ d3.json("countries.geojson").then(data => {
     data.features.forEach(trimStrayPieces);
     features = data.features;
     fillDataList();
+    fillDataList();
+    buildPresetGroups();
+    fillPresetSelect();
+    loadSelected();
 });
