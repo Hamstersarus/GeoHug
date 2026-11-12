@@ -105,22 +105,43 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 ## Step 8: Presets, regions and areas
 
 ### 8a. Preset picker in the page
-- [ ] Add a preset box to the setup screen: a `<select id="preset-select">` and the buttons "Add to list", "Replace list" and "Clear list"
-- [ ] Select the new elements in `app.js`
+- [x] Add a preset box to the setup screen: a `<select id="preset-select">` and the buttons "Add to list", "Replace list" and "Clear list"
+- [x] Select the new elements in `app.js`
 
 ### 8b. Build presets from the data
-- [ ] Write `customAreas` (hand-made groups such as Balkans, Nordic countries, Middle East), using exact `NAME` strings from the data
-- [ ] Write `buildPresetGroups()`: group every country by `CONTINENT` and by `SUBREGION`, skipping a region whose name equals its continent
-- [ ] Write `fillPresetSelect()`: one `<optgroup>` each for Continents, Regions and Areas, skipping groups with fewer than 2 countries
-- [ ] Call both after the data loads, before `loadSelected()`
+- [x] Write `customAreas` (hand-made groups such as Balkans, Nordic countries, Middle East), using exact `NAME` strings from the data
+- [x] Write `buildPresetGroups()`: group every country by `CONTINENT` and by `SUBREGION`, skipping a region whose name equals its continent
+- [x] Write `fillPresetSelect()`: one `<optgroup>` each for Continents, Regions and Areas, skipping groups with fewer than 2 countries
+- [x] Call both after the data loads, before `loadSelected()`
 
 ### 8c. Preset buttons
-- [ ] Write `getPresetNames()`, which reads the picked option and keeps only names that exist in the data
-- [ ] Write `addPreset()`, `replacePreset()` and `clearList()`, each ending with `renderList()`
-- [ ] Wire up the three button clicks
-- [ ] Test: Europe adds 39 countries, Balkans adds 11, Add keeps existing countries without duplicates, Replace swaps the list, Clear empties it, and Start quiz works on a preset
+- [x] Write `getPresetNames()`, which reads the picked option and keeps only names that exist in the data
+- [x] Write `addPreset()`, `replacePreset()` and `clearList()`, each ending with `renderList()`
+- [x] Wire up the three button clicks
+- [x] Test: Europe adds 39 countries, Balkans adds 11, Add keeps existing countries without duplicates, Replace swaps the list, Clear empties it, and Start quiz works on a preset
 
 ### 8d. Optional: save your own presets
 - [ ] Save the current list under a name in `localStorage`, show it in an "My presets" group, and add a delete button
+
+- [ ] Commit and push
+
+## Step 9: Exit button and timer
+
+### 9a. Exit button
+- [x] Add `<button id="exit-btn">Exit quiz</button>` to the top of the quiz screen
+- [x] Keep the feedback `setTimeout` id in `feedbackTimer`, so leaving the quiz can cancel it
+- [x] Write `exitQuiz()`: confirm, cancel the pending timeout, stop the timer, stop accepting clicks, hide the quiz screen and show the setup screen
+- [x] Wire up the Exit button click
+- [x] Test: exit mid-quiz and the setup screen returns with your list intact, wait a few seconds and no results screen pops up
+
+### 9b. Timer
+- [x] Add `<p id="timer"></p>` to the quiz screen
+- [x] Write `formatTime`, `startTimer`, `stopTimer` and `getElapsedSeconds`
+- [x] Call `startTimer()` in `beginQuestions` and `stopTimer()` in `showResults` and `exitQuiz`
+- [x] Add the time to the results text
+- [x] Test: the timer counts up during the quiz, stops at the results screen, restarts on Retry and on a new quiz
+
+### 9c. Replace list feedback
+- [x] Show a message after Add and Replace so it is obvious what happened
 
 - [ ] Commit and push

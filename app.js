@@ -260,19 +260,19 @@ const clearBtn = document.querySelector("#clear-btn");
 let presetGroups = {};
 
 const customAreas = {
-    "Nordic Countries" : [],
-    "Baltic states" : [],
-    "Balkans" : [],
-    "British Isles" : [],
-    "Benelux" : [],
-    "Caucasus" : [],
-    "Middle East" : [],
-    "Mainland Southeast Asia" : [],
-    "Horn of Africa" : [],
-    "Sahel" : [],
-    "Maghreb" : [],
-    "Andrean countries" : [],
-    "The -stans" : [],
+    "Nordic countries" : ["Norway", "Sweden", "Denmark", "Finland", "Iceland"],
+    "Baltic states" : ["Estonia", "Latvia", "Lithuania"],
+    "Balkans" : ["Albania", "Bosnia and Herz.", "Bulgaria", "Croatia", "Greece", "Kosovo", "Montenegro", "North Macedonia", "Romania", "Serbia", "Slovenia"],
+    "British Isles" : ["United Kingdom", "Ireland"],
+    "Benelux" : ["Belgium", "Netherlands", "Luxembourg"],
+    "Caucasus" : ["Armenia", "Azerbaijan", "Georgia"],
+    "Middle East" : ["Turkey", "Syria", "Lebanon", "Israel", "Palestine", "Jordan", "Iraq", "Iran", "Kuwait", "Saudi Arabia", "Qatar", "United Arab Emirates", "Oman", "Yemen", "Egypt"],
+    "Mainland Southeast Asia" : ["Myanmar", "Thailand", "Laos", "Cambodia", "Vietnam"],
+    "Horn of Africa" : ["Ethiopia", "Eritrea", "Djibouti", "Somalia"],
+    "Sahel" : ["Senegal", "Mauritania", "Mali", "Burkina Faso", "Niger", "Chad"],
+    "Maghreb" : ["Morocco", "Algeria", "Tunisia", "Libya"],
+    "Andean countries" : ["Colombia", "Venezuela", "Ecuador", "Peru", "Bolivia", "Chile"],
+    "The -stans" : ["Kazakhstan", "Uzbekistan", "Tajikistan", "Kyrgyzstan", "Turkmenistan", "Afghanistan", "Pakistan"],
 };
 
 function buildPresetGroups() {
@@ -311,7 +311,7 @@ function fillPresetSelect() {
         const optgroup = document.createElement("optgroup");
         optgroup.label = groupName;
 
-        Object.keys(presentGroups[groupName]).sort().forEach(presetName => {
+        Object.keys(presetGroups[groupName]).sort().forEach(presetName => {
             const names = presetGroups[groupName][presetName];
             if(names.length < 2) {
                 return;
@@ -325,6 +325,10 @@ function fillPresetSelect() {
 
         presetSelect.appendChild(optgroup);
     });
+}
+
+function getPresetLabel() {
+    return presetSelect.options[presetSelect.selectedIndex].textContent.trim();
 }
 
 function getPresetNames() {
@@ -341,13 +345,14 @@ function addPreset() {
         }
     });
 
-    errorMsg.textContent = "";
     renderList();
+    errorMsg.textContent = "Added " + getPresetLabel() + ". The list now has " + selected.length + " countries.";
 }
 
 function replacePreset() {
     selected = [];
     addPreset();
+    errorMsg.textContent = "Replaced the list with " + getPresetLabel() + ".";
 }
 
 function clearList() {
@@ -375,6 +380,8 @@ const promptEl = document.querySelector("#prompt");
 const scoreEl = document.querySelector("#score");
 const finalScoreEl = document.querySelector("#final-score");
 const restartBtn = document.querySelector("#restart-btn");
+const exitBtn = document.querySelector("#exit-btn");
+const timerEl = document.querySelector("#timer");
 
 let queue = [];
 let currentTarget = null;
@@ -383,6 +390,9 @@ let missed = [];
 let acceptingClicks = false;
 let currentVisible = [];
 let correctNames = [];
+let feedbackTimer = null;
+let timerId = null;
+let startTime = 0;
 
 function getVisibleFeatures() {
     const continents = new Set();
@@ -438,12 +448,38 @@ function handleClick(event, d) {
         .filter(f => f.properties.NAME === currentTarget)
         .classed("reveal", true);
 
-    setTimeout(() => {
+    feedbackTimer = setTimeout(() => {
         svg.selectAll(".wrong, .reveal")
             .classed("wrong", false)
             .classed("reveal", false);
         showNextQuestion();
     }, 1200);
+}
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    return minutes + ":" + String(secs).padStart(2, "0");
+}
+
+function getElapsedSeconds() {
+    return Math.floor((Date.now() - startTime) / 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerId);
+    timerId = null;
+}
+
+function startTimer() {
+    stopTimer();
+    startTime = Date.now();
+    timerEl.textContent = "Time: 0:00";
+
+    timerId = setInterval(() => {
+        timerEl.textContent = "Time: " + formatTime(getElapsedSeconds());
+    }, 250);
 }
 
 function beginQuestions(names) {
@@ -453,6 +489,8 @@ function beginQuestions(names) {
     missed = [];
     correctNames = [];
 
+    startTimer();
+
     svg.selectAll("path")
         .classed("correct", false)
         .on("click", handleClick);
@@ -460,15 +498,29 @@ function beginQuestions(names) {
 }
 
 function showResults() {
+    stopTimer();
     quizScreen.classList.add("hidden");
     resultScreen.classList.remove("hidden");
 
-    let text = "You got " + score + " out of " + total + " right.";
+    let text = "You got " + score + " out of " + total + " right. Time: " + formatTime(getElapsedSeconds()) + ".";
     if(missed.length > 0) {
         text += " Missed: " + missed.join(", ");
     }
     finalScoreEl.textContent = text;
     retryBtn.classList.toggle("hidden", missed.length === 0);
+}
+
+function exitQuiz() {
+    if(!confirm("Leave the quiz? Your progress will be lost.")) {
+        return;
+    }
+
+    clearTimeout(feedbackTimer);
+    stopTimer();
+    acceptingClicks = false;
+
+    quizScreen.classList.add("hidden");
+    setupScreen.classList.remove("hidden");
 }
 
 function restart() {
@@ -516,13 +568,13 @@ function startQuiz() {
 
 startBtn.addEventListener("click", startQuiz);
 restartBtn.addEventListener("click", restart);
+exitBtn.addEventListener("click", exitQuiz);
 
 d3.json("countries.geojson").then(data => {
     data.features.forEach(clampLongitudes);
     data.features.forEach(reverseRings);
     data.features.forEach(trimStrayPieces);
     features = data.features;
-    fillDataList();
     fillDataList();
     buildPresetGroups();
     fillPresetSelect();
