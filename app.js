@@ -382,6 +382,11 @@ const finalScoreEl = document.querySelector("#final-score");
 const restartBtn = document.querySelector("#restart-btn");
 const exitBtn = document.querySelector("#exit-btn");
 const timerEl = document.querySelector("#timer");
+const recallBox = document.querySelector("#recall-box");
+const recallInput = document.querySelector("#recall-input");
+const recallBtn = document.querySelector("#recall-btn");
+const giveUpBtn = document.querySelector("#giveup-btn");
+const recallMsg = document.querySelector("#recall-msg");
 
 let queue = [];
 let currentTarget = null;
@@ -393,6 +398,7 @@ let correctNames = [];
 let feedbackTimer = null;
 let timerId = null;
 let startTime = 0;
+let mode = "click";
 
 function getVisibleFeatures() {
     const continents = new Set();
@@ -482,7 +488,12 @@ function startTimer() {
     }, 250);
 }
 
+function getMode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+}
+
 function beginQuestions(names) {
+    recallBox.classList.add("hidden");
     queue = shuffleArray(names);
     total = names.length;
     score = 0;
@@ -497,12 +508,88 @@ function beginQuestions(names) {
     showNextQuestion();
 }
 
+function beginRecall(names) {
+    queue = [...names];
+    total = names.length;
+    score = 0;
+    missed = [];
+    correctNames = [];
+    acceptingClicks = false;
+
+    startTimer();
+    svg.selectAll("path")
+        .classed("correct", false)
+        .on("click", null);
+
+    recallBox.classList.remove("hidden");
+    recallInput.value = "";
+    recallMsg.textContent = "";
+    promptEl.textContent = "Type the countries you remember, then press Enter.";
+    scoreEl.textContent = "Found: 0 / " + total;
+    recallInput.focus();
+}
+
+function submitRecall() {
+    if(recallInput.value.trim() === "") {
+        return;
+    }
+
+    const name = findCountryName(recallInput.value);
+    recallInput.value = "";
+
+    if(name===null) {
+        recallMsg.textContent = "Not recognised. Check the spelling.";
+        return;
+    }
+
+    if(correctNames.includes(name)) {
+        recallMsg.textContent = name + " is already found.";
+        return;
+    }
+
+    if(!queue.includes(name)) {
+        recallMsg.textContent = name +" isn't in your list.";
+        return;
+    }
+
+    queue = queue.filter(n => n !== name);
+    correctNames.push(name);
+    score++;
+    svg.selectAll("path")
+        .filter(f => f.properties.NAME === name)
+        .classed("correct", true);
+
+    recallMsg.textContent = "Correct: " + name;
+    scoreEl.textContent = "Found: " + score + " / " + total;
+
+    if(queue.length === 0) {
+        finishRecall();
+    } 
+}
+
+function finishRecall() {
+    missed = [...queue];
+    showResults();
+}
+
+function beginRound(names) {
+    if(mode === "recall") {
+        beginRecall(names);
+    } else {
+        beginQuestions(names);
+    }
+}
+
 function showResults() {
     stopTimer();
     quizScreen.classList.add("hidden");
     resultScreen.classList.remove("hidden");
 
-    let text = "You got " + score + " out of " + total + " right. Time: " + formatTime(getElapsedSeconds()) + ".";
+    let text = "You got " + score + " out of " + total + " right.";
+    if(mode === "recall") {
+        text = "You recalled " + score + " out of " + total + " countries.";
+    }
+    text += " Time: " + formatTime(getElapsedSeconds()) + ".";
     if(missed.length > 0) {
         text += " Missed: " + missed.join(", ");
     }
@@ -546,7 +633,7 @@ function retryMissed() {
 
     resultScreen.classList.add("hidden");
     quizScreen.classList.remove("hidden");
-    beginQuestions(names);
+    beginRound(names);
 }
 
 retryBtn.addEventListener("click", retryMissed);
@@ -563,12 +650,21 @@ function startQuiz() {
 
     currentVisible = getVisibleFeatures();
     drawMap(currentVisible);
-    beginQuestions(selected);
+    mode = getMode();
+    beginRound(selected);
 }
 
 startBtn.addEventListener("click", startQuiz);
 restartBtn.addEventListener("click", restart);
 exitBtn.addEventListener("click", exitQuiz);
+
+recallBtn.addEventListener("click", submitRecall);
+recallInput.addEventListener("keydown", event => {
+    if(event.key === "Enter") {
+        submitRecall();
+    }
+});
+giveUpBtn.addEventListener("click", finishRecall);
 
 d3.json("countries.geojson").then(data => {
     data.features.forEach(clampLongitudes);

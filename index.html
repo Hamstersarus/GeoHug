@@ -22,6 +22,10 @@
         <button id="add-btn">Add</button>
         <p id="error-msg"></p>
         <ul id="country-list"></ul>
+        <div id="mode-box">
+            <label><input type="radio" name="mode" value="click" checked> Click the country</label>
+            <label><input type="radio" name="mode" value="recall"> Type the names (recall)</label>
+        </div>
         <button id="start-btn">Start quiz</button>
     </section>
 
@@ -30,6 +34,12 @@
         <p id="prompt"></p>
         <p id="score"></p>
         <p id="timer"></p>
+        <div id="recall-box" class="hidden">
+            <input type="text" id="recall-input" placeholder="Type a country and press Enter" autocomplete="off">
+            <button id="recall-btn">Enter</button>
+            <button id="giveup-btn">Give up</button>
+            <p id="recall-msg"></p>
+        </div>
         <svg id="map"></svg>
     </section>
 

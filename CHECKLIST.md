@@ -145,3 +145,27 @@ A map-quiz website: the user enters the countries they want to be quized on, the
 - [x] Show a message after Add and Replace so it is obvious what happened
 
 - [ ] Commit and push
+
+## Step 10: Recall mode (type the names)
+
+### 10a. Mode picker
+- [ ] Add two radio buttons (`name="mode"`, values `click` and `recall`) above the Start quiz button
+- [ ] Add a `mode` variable and a `getMode()` function that reads the checked radio
+
+### 10b. Recall box in the quiz screen
+- [ ] Add a hidden `#recall-box` to the quiz screen: a text input (no autocomplete list), an Enter button, a Give up button and a message line
+- [ ] Select the new elements in `app.js`
+
+### 10c. Recall logic
+- [ ] Write `beginRecall(names)`: reset the state, start the timer, turn off map clicks, show the recall box
+- [ ] Write `submitRecall()`: ignore blank input, then reject unknown names, already-found names and names not in your list, otherwise colour that country green and update the count
+- [ ] Write `finishRecall()`: put the countries not found into `missed` and show the results
+- [ ] Write `beginRound(names)` that picks `beginRecall` or `beginQuestions`, and use it in `startQuiz` and `retryMissed`
+- [ ] Hide the recall box at the start of `beginQuestions`
+- [ ] Wire up the Enter key, the Enter button and the Give up button
+
+### 10d. Results and testing
+- [ ] Change `showResults` to say "You recalled X out of Y countries." in recall mode
+- [ ] Test: typing a country colours it, aliases work, a duplicate and an unlisted country show messages, clicking the map does not score, Give up lists the missed ones, Retry reuses recall mode, and click mode still works
+
+- [ ] Commit and push
